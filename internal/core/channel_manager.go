@@ -5,6 +5,8 @@ import (
 	drv "edge-gateway/internal/driver"
 	"edge-gateway/internal/model"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 type ChannelStatus struct {
@@ -1256,6 +1259,26 @@ func (cm *ChannelManager) AddDevice(channelID string, dev *model.Device) error {
 	// 初始化运行时
 	dev.StopChan = make(chan struct{})
 
+	// 为新设备创建设备文件
+	if dev.DeviceFile == "" {
+		// 构建设备文件路径
+		deviceFilePath := fmt.Sprintf("conf/devices/%s/%s.yaml", ch.Protocol, dev.ID)
+		dev.DeviceFile = deviceFilePath
+
+		// 确保设备文件目录存在
+		deviceDir := filepath.Dir(deviceFilePath)
+		if err := os.MkdirAll(deviceDir, 0755); err != nil {
+			zap.L().Warn("Failed to create device directory", zap.String("dir", deviceDir), zap.Error(err))
+		} else {
+			// 保存设备配置到文件
+			if err := saveDeviceToFile(deviceFilePath, dev); err != nil {
+				zap.L().Warn("Failed to save device file", zap.String("file", deviceFilePath), zap.Error(err))
+			} else {
+				zap.L().Info("Device file created", zap.String("file", deviceFilePath))
+			}
+		}
+	}
+
 	// 添加到列表
 	ch.Devices = append(ch.Devices, *dev)
 
@@ -1271,6 +1294,29 @@ func (cm *ChannelManager) AddDevice(channelID string, dev *model.Device) error {
 	}
 
 	return cm.saveChannels()
+}
+
+// saveDeviceToFile 保存设备配置到文件
+func saveDeviceToFile(filePath string, dev *model.Device) error {
+	// 创建设备配置副本，只保存需要的字段
+	deviceConfig := model.Device{
+		ID:       dev.ID,
+		Name:     dev.Name,
+		Enable:   dev.Enable,
+		Interval: dev.Interval,
+		Config:   dev.Config,
+		Storage:  dev.Storage,
+		Points:   dev.Points,
+	}
+
+	// 序列化为 YAML
+	data, err := yaml.Marshal(deviceConfig)
+	if err != nil {
+		return err
+	}
+
+	// 写入文件
+	return os.WriteFile(filePath, data, 0644)
 }
 
 // AddPoint 添加点位到设备
@@ -1361,6 +1407,15 @@ func (cm *ChannelManager) AddPoints(channelID, deviceID string, points []model.P
 	// 追加到设备点位列表
 	dev.Points = append(dev.Points, points...)
 
+	// 更新设备文件
+	if dev.DeviceFile != "" {
+		if err := saveDeviceToFile(dev.DeviceFile, dev); err != nil {
+			zap.L().Warn("Failed to update device file", zap.String("file", dev.DeviceFile), zap.Error(err))
+		} else {
+			zap.L().Info("Device file updated", zap.String("file", dev.DeviceFile))
+		}
+	}
+
 	// 单次重启设备应用变更
 	return cm.restartDeviceLocked(ch, idx)
 }
@@ -1407,6 +1462,15 @@ func (cm *ChannelManager) UpdatePoint(channelID, deviceID string, point *model.P
 
 	dev.Points[pointIdx] = *point
 
+	// 更新设备文件
+	if dev.DeviceFile != "" {
+		if err := saveDeviceToFile(dev.DeviceFile, dev); err != nil {
+			zap.L().Warn("Failed to update device file", zap.String("file", dev.DeviceFile), zap.Error(err))
+		} else {
+			zap.L().Info("Device file updated", zap.String("file", dev.DeviceFile))
+		}
+	}
+
 	// Restart device to apply changes
 	return cm.restartDeviceLocked(ch, idx)
 }
@@ -1447,6 +1511,15 @@ func (cm *ChannelManager) RemovePoint(channelID, deviceID, pointID string) error
 	}
 
 	dev.Points = append(dev.Points[:pointIdx], dev.Points[pointIdx+1:]...)
+
+	// 更新设备文件
+	if dev.DeviceFile != "" {
+		if err := saveDeviceToFile(dev.DeviceFile, dev); err != nil {
+			zap.L().Warn("Failed to update device file", zap.String("file", dev.DeviceFile), zap.Error(err))
+		} else {
+			zap.L().Info("Device file updated", zap.String("file", dev.DeviceFile))
+		}
+	}
 
 	// Restart device to apply changes
 	return cm.restartDeviceLocked(ch, idx)
@@ -1496,6 +1569,15 @@ func (cm *ChannelManager) RemovePoints(channelID, deviceID string, pointIDs []st
 	}
 
 	dev.Points = newPoints
+
+	// 更新设备文件
+	if dev.DeviceFile != "" {
+		if err := saveDeviceToFile(dev.DeviceFile, dev); err != nil {
+			zap.L().Warn("Failed to update device file", zap.String("file", dev.DeviceFile), zap.Error(err))
+		} else {
+			zap.L().Info("Device file updated", zap.String("file", dev.DeviceFile))
+		}
+	}
 
 	// Restart device to apply changes
 	return cm.restartDeviceLocked(ch, idx)

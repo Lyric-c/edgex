@@ -455,3 +455,200 @@ func (nm *NorthboundManager) saveConfig() error {
 	}
 	return nil
 }
+
+// UpdateConfig 更新北向配置并重启相关客户端/服务器
+func (nm *NorthboundManager) UpdateConfig(newConfig model.NorthboundConfig) {
+	nm.mu.Lock()
+	defer nm.mu.Unlock()
+
+	// 保存旧配置用于比较
+	oldConfig := nm.config
+
+	// 更新配置
+	nm.config = newConfig
+
+	// 处理 MQTT 配置变更
+	nm.updateMQTTClients(oldConfig.MQTT, newConfig.MQTT)
+
+	// 处理 HTTP 配置变更
+	nm.updateHTTPClients(oldConfig.HTTP, newConfig.HTTP)
+
+	// 处理 OPC UA 配置变更
+	nm.updateOPCUAServers(oldConfig.OPCUA, newConfig.OPCUA)
+
+	// 处理 SparkplugB 配置变更
+	nm.updateSparkplugBClients(oldConfig.SparkplugB, newConfig.SparkplugB)
+}
+
+// updateMQTTClients 更新 MQTT 客户端
+func (nm *NorthboundManager) updateMQTTClients(oldConfigs, newConfigs []model.MQTTConfig) {
+	// 停止已删除或禁用的客户端
+	for _, oldCfg := range oldConfigs {
+		if client, exists := nm.mqttClients[oldCfg.ID]; exists {
+			// 检查是否在新配置中
+			found := false
+			for _, newCfg := range newConfigs {
+				if newCfg.ID == oldCfg.ID {
+					found = true
+					if !newCfg.Enable {
+						client.Stop()
+						delete(nm.mqttClients, oldCfg.ID)
+					}
+					break
+				}
+			}
+			if !found {
+				client.Stop()
+				delete(nm.mqttClients, oldCfg.ID)
+			}
+		}
+	}
+
+	// 启动或更新新的客户端
+	for _, newCfg := range newConfigs {
+		if newCfg.Enable {
+			if client, exists := nm.mqttClients[newCfg.ID]; exists {
+				// 更新现有客户端
+				client.UpdateConfig(newCfg)
+			} else {
+				// 创建新客户端
+				client := mqtt.NewClient(newCfg, nm.sb, nm.storage)
+				if err := client.Start(); err != nil {
+					log.Printf("Failed to start MQTT client [%s]: %v", newCfg.Name, err)
+				} else {
+					log.Printf("Northbound MQTT client [%s] started", newCfg.Name)
+					nm.mqttClients[newCfg.ID] = client
+				}
+			}
+		}
+	}
+}
+
+// updateHTTPClients 更新 HTTP 客户端
+func (nm *NorthboundManager) updateHTTPClients(oldConfigs, newConfigs []model.HTTPConfig) {
+	// 停止已删除或禁用的客户端
+	for _, oldCfg := range oldConfigs {
+		if client, exists := nm.httpClients[oldCfg.ID]; exists {
+			// 检查是否在新配置中
+			found := false
+			for _, newCfg := range newConfigs {
+				if newCfg.ID == oldCfg.ID {
+					found = true
+					if !newCfg.Enable {
+						client.Stop()
+						delete(nm.httpClients, oldCfg.ID)
+					}
+					break
+				}
+			}
+			if !found {
+				client.Stop()
+				delete(nm.httpClients, oldCfg.ID)
+			}
+		}
+	}
+
+	// 启动或更新新的客户端
+	for _, newCfg := range newConfigs {
+		if newCfg.Enable {
+			if client, exists := nm.httpClients[newCfg.ID]; exists {
+				// 更新现有客户端
+				client.UpdateConfig(newCfg)
+			} else {
+				// 创建新客户端
+				client := http.NewClient(newCfg, nm.storage)
+				client.Start()
+				nm.httpClients[newCfg.ID] = client
+				log.Printf("Northbound HTTP client [%s] started", newCfg.Name)
+			}
+		}
+	}
+}
+
+// updateOPCUAServers 更新 OPC UA 服务器
+func (nm *NorthboundManager) updateOPCUAServers(oldConfigs, newConfigs []model.OPCUAConfig) {
+	// 停止已删除或禁用的服务器
+	for _, oldCfg := range oldConfigs {
+		if server, exists := nm.opcuaServers[oldCfg.ID]; exists {
+			// 检查是否在新配置中
+			found := false
+			for _, newCfg := range newConfigs {
+				if newCfg.ID == oldCfg.ID {
+					found = true
+					if !newCfg.Enable {
+						server.Stop()
+						delete(nm.opcuaServers, oldCfg.ID)
+					}
+					break
+				}
+			}
+			if !found {
+				server.Stop()
+				delete(nm.opcuaServers, oldCfg.ID)
+			}
+		}
+	}
+
+	// 启动或更新新的服务器
+	for _, newCfg := range newConfigs {
+		if newCfg.Enable {
+			if server, exists := nm.opcuaServers[newCfg.ID]; exists {
+				// 更新现有服务器
+				server.UpdateConfig(newCfg)
+			} else {
+				// 创建新服务器
+				server := opcua.NewServer(newCfg, nm.sb)
+				if err := server.Start(); err != nil {
+					log.Printf("Failed to start OPC UA server [%s]: %v", newCfg.Name, err)
+				} else {
+					log.Printf("Northbound OPC UA server [%s] started", newCfg.Name)
+					nm.opcuaServers[newCfg.ID] = server
+				}
+			}
+		}
+	}
+}
+
+// updateSparkplugBClients 更新 SparkplugB 客户端
+func (nm *NorthboundManager) updateSparkplugBClients(oldConfigs, newConfigs []model.SparkplugBConfig) {
+	// 停止已删除或禁用的客户端
+	for _, oldCfg := range oldConfigs {
+		if client, exists := nm.sparkplugClients[oldCfg.ID]; exists {
+			// 检查是否在新配置中
+			found := false
+			for _, newCfg := range newConfigs {
+				if newCfg.ID == oldCfg.ID {
+					found = true
+					if !newCfg.Enable {
+						client.Stop()
+						delete(nm.sparkplugClients, oldCfg.ID)
+					}
+					break
+				}
+			}
+			if !found {
+				client.Stop()
+				delete(nm.sparkplugClients, oldCfg.ID)
+			}
+		}
+	}
+
+	// 启动或更新新的客户端
+	for _, newCfg := range newConfigs {
+		if newCfg.Enable {
+			if client, exists := nm.sparkplugClients[newCfg.ID]; exists {
+				// 更新现有客户端
+				client.UpdateConfig(newCfg)
+			} else {
+				// 创建新客户端
+				client := sparkplugb.NewClient(newCfg)
+				if err := client.Start(); err != nil {
+					log.Printf("Failed to start Sparkplug B client [%s]: %v", newCfg.Name, err)
+				} else {
+					log.Printf("Northbound Sparkplug B client [%s] started", newCfg.Name)
+					nm.sparkplugClients[newCfg.ID] = client
+				}
+			}
+		}
+	}
+}

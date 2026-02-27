@@ -238,15 +238,16 @@ type DeviceStorage struct {
 
 // Device represents a device configuration (within a channel)
 type Device struct {
-	ID       string         `json:"id" yaml:"id"`
-	Name     string         `json:"name" yaml:"name"`
-	Enable   bool           `json:"enable" yaml:"enable"`
-	Interval Duration       `json:"interval" yaml:"interval"`
-	Config   map[string]any `json:"config" yaml:"config"`                       // 设备特定配置（如 slave_id）
-	Storage  DeviceStorage  `json:"storage,omitempty" yaml:"storage,omitempty"` // Data storage strategy
-	Points   []Point        `json:"points" yaml:"points"`                       // 该设备的点位列表
-	State    int            `json:"state" yaml:"-"`                             // 运行时状态：0=Online, 1=Unstable, 2=Offline, 3=Quarantine
-	StopChan chan struct{}  `json:"-" yaml:"-"`
+	ID         string         `json:"id" yaml:"id"`
+	Name       string         `json:"name" yaml:"name"`
+	Enable     bool           `json:"enable" yaml:"enable"`
+	Interval   Duration       `json:"interval" yaml:"interval"`
+	DeviceFile string         `json:"device_file,omitempty" yaml:"device_file,omitempty"` // 设备配置文件路径
+	Config     map[string]any `json:"config" yaml:"config"`                               // 设备特定配置（如 slave_id）
+	Storage    DeviceStorage  `json:"storage,omitempty" yaml:"storage,omitempty"`         // Data storage strategy
+	Points     []Point        `json:"points" yaml:"points"`                               // 该设备的点位列表
+	State      int            `json:"state" yaml:"-"`                                     // 运行时状态：0=Online, 1=Unstable, 2=Offline, 3=Quarantine
+	StopChan   chan struct{}  `json:"-" yaml:"-"`
 	// Runtime state fields
 	NodeRuntime *NodeRuntime `json:"runtime,omitempty" yaml:"-"`
 }

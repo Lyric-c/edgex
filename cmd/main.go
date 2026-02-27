@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -36,11 +37,12 @@ func main() {
 	logger.InitLogger("info", "", nil)
 	zap.L().Info("Starting Industrial Edge Gateway...")
 
-	// 1. Load Config
-	cfg, err := config.LoadConfig(*confDir)
+	// 1. Load Config using ConfigManager
+	cfgManager, err := config.NewConfigManager(*confDir)
 	if err != nil {
 		zap.L().Fatal("Failed to load config", zap.Error(err))
 	}
+	cfg := cfgManager.GetConfig()
 
 	// Re-init Logger with config and broadcaster
 	// Ensure logs directory exists
@@ -157,7 +159,35 @@ func main() {
 		}
 	}()
 
-	// 7. Wait for shutdown signal
+	// 7. Start config watcher for hot reload
+	cfgManager.StartWatch(5 * time.Second)
+
+	// 8. Handle config reload
+	go func() {
+		for range cfgManager.ReloadChan {
+			zap.L().Info("Config reloaded, updating components...")
+			newCfg := cfgManager.GetConfig()
+
+			// Update Edge Compute rules
+			ecm.LoadRules(newCfg.EdgeRules)
+
+			// Update Northbound config
+			nbm.UpdateConfig(newCfg.Northbound)
+
+			// Update channels (add new ones, remove old ones, update existing ones)
+			// This would require more complex logic, but for now we'll just log
+			zap.L().Info("Channels config updated", zap.Int("count", len(newCfg.Channels)))
+
+			// Update device storage configs
+			for _, ch := range newCfg.Channels {
+				for _, dev := range ch.Devices {
+					dsm.UpdateDeviceConfig(dev.ID, dev.Storage)
+				}
+			}
+		}
+	}()
+
+	// 9. Wait for shutdown signal
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan

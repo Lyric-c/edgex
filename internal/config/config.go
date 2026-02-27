@@ -6,11 +6,20 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 var saveMu sync.Mutex
+
+// ConfigManager 管理配置的加载和热重载
+type ConfigManager struct {
+	Config     *Config
+	ConfDir    string
+	WatchFiles map[string]time.Time
+	ReloadChan chan struct{}
+}
 
 type Config struct {
 	Server struct {
@@ -64,6 +73,30 @@ func LoadConfig(confDir string) (*Config, error) {
 		return nil, err
 	}
 
+	// 加载设备文件
+	for i := range cfg.Channels {
+		for j := range cfg.Channels[i].Devices {
+			device := &cfg.Channels[i].Devices[j]
+			if device.DeviceFile != "" {
+				// 检查设备文件路径是否存在
+				devicePath := device.DeviceFile
+				// 如果路径不存在，尝试相对于 conf 目录的路径
+				if _, err := os.Stat(devicePath); os.IsNotExist(err) {
+					devicePath = filepath.Join(confDir, device.DeviceFile)
+				}
+				data, err := os.ReadFile(devicePath)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read device file %s: %w", devicePath, err)
+				}
+				if err := yaml.Unmarshal(data, device); err != nil {
+					return nil, fmt.Errorf("failed to parse device file %s: %w", devicePath, err)
+				}
+				// 保留设备文件路径
+				device.DeviceFile = devicePath
+			}
+		}
+	}
+
 	// 初始化通道的运行时字段
 	for i := range cfg.Channels {
 		cfg.Channels[i].StopChan = make(chan struct{})
@@ -77,6 +110,151 @@ func LoadConfig(confDir string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// NewConfigManager 创建一个新的配置管理器
+func NewConfigManager(confDir string) (*ConfigManager, error) {
+	cfg, err := LoadConfig(confDir)
+	if err != nil {
+		return nil, err
+	}
+
+	manager := &ConfigManager{
+		Config:     cfg,
+		ConfDir:    confDir,
+		WatchFiles: make(map[string]time.Time),
+		ReloadChan: make(chan struct{}),
+	}
+
+	// 初始化监控文件的修改时间
+	manager.updateWatchFiles()
+
+	return manager, nil
+}
+
+// updateWatchFiles 更新监控文件的修改时间
+func (cm *ConfigManager) updateWatchFiles() {
+	files := []string{
+		"server.yaml",
+		"storage.yaml",
+		"northbound.yaml",
+		"channels.yaml",
+		"edge_rules.yaml",
+		"system.yaml",
+		"users.yaml",
+	}
+
+	for _, file := range files {
+		path := filepath.Join(cm.ConfDir, file)
+		if info, err := os.Stat(path); err == nil {
+			cm.WatchFiles[path] = info.ModTime()
+		}
+	}
+
+	// 监控设备文件
+	for _, channel := range cm.Config.Channels {
+		for _, device := range channel.Devices {
+			if device.DeviceFile != "" {
+				if info, err := os.Stat(device.DeviceFile); err == nil {
+					cm.WatchFiles[device.DeviceFile] = info.ModTime()
+				}
+			}
+		}
+	}
+}
+
+// StartWatch 开始监控配置文件变化
+func (cm *ConfigManager) StartWatch(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				if cm.checkForChanges() {
+					newCfg, err := LoadConfig(cm.ConfDir)
+					if err == nil {
+						cm.Config = newCfg
+						cm.updateWatchFiles()
+						// 通知应用程序配置已重载
+						select {
+						case cm.ReloadChan <- struct{}{}:
+						default:
+						}
+					}
+				}
+			}
+		}
+	}()
+}
+
+// checkForChanges 检查配置文件是否有变化
+func (cm *ConfigManager) checkForChanges() bool {
+	// 检查主配置文件
+	files := []string{
+		"server.yaml",
+		"storage.yaml",
+		"northbound.yaml",
+		"channels.yaml",
+		"edge_rules.yaml",
+		"system.yaml",
+		"users.yaml",
+	}
+
+	for _, file := range files {
+		path := filepath.Join(cm.ConfDir, file)
+		if info, err := os.Stat(path); err == nil {
+			if modTime, exists := cm.WatchFiles[path]; !exists || info.ModTime().After(modTime) {
+				return true
+			}
+		}
+	}
+
+	// 检查设备文件
+	for _, channel := range cm.Config.Channels {
+		for _, device := range channel.Devices {
+			if device.DeviceFile != "" {
+				if info, err := os.Stat(device.DeviceFile); err == nil {
+					if modTime, exists := cm.WatchFiles[device.DeviceFile]; !exists || info.ModTime().After(modTime) {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+// GetConfig 获取当前配置
+func (cm *ConfigManager) GetConfig() *Config {
+	return cm.Config
+}
+
+// Reload 手动重载配置
+func (cm *ConfigManager) Reload() error {
+	newCfg, err := LoadConfig(cm.ConfDir)
+	if err != nil {
+		return err
+	}
+
+	cm.Config = newCfg
+	cm.updateWatchFiles()
+
+	// 通知应用程序配置已重载
+	select {
+	case cm.ReloadChan <- struct{}{}:
+	default:
+	}
+
+	return nil
+}
+
+// StopWatch 停止监控配置文件变化
+func (cm *ConfigManager) StopWatch() {
+	// 目前实现为空，因为我们使用的是无限循环的 goroutine
+	// 实际项目中可以使用 context 来控制
 }
 
 func SaveConfig(confDir string, cfg *Config) error {
@@ -114,6 +292,20 @@ func SaveConfig(confDir string, cfg *Config) error {
 		return nil
 	}
 
+	// 保存通道配置时，只保留设备ID和设备文件路径，不保存设备详细信息
+	channelsToSave := make([]model.Channel, len(cfg.Channels))
+	for i, channel := range cfg.Channels {
+		channelsToSave[i] = channel
+		devicesToSave := make([]model.Device, len(channel.Devices))
+		for j, device := range channel.Devices {
+			devicesToSave[j] = model.Device{
+				ID:         device.ID,
+				DeviceFile: device.DeviceFile,
+			}
+		}
+		channelsToSave[i].Devices = devicesToSave
+	}
+
 	if err := saveFile("server.yaml", &cfg.Server); err != nil {
 		return err
 	}
@@ -123,7 +315,7 @@ func SaveConfig(confDir string, cfg *Config) error {
 	if err := saveFile("northbound.yaml", &cfg.Northbound); err != nil {
 		return err
 	}
-	if err := saveFile("channels.yaml", &cfg.Channels); err != nil {
+	if err := saveFile("channels.yaml", channelsToSave); err != nil {
 		return err
 	}
 	if err := saveFile("edge_rules.yaml", &cfg.EdgeRules); err != nil {
