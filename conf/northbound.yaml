@@ -1,7 +1,7 @@
 mqtt:
     - id: mqtt-1
       name: Default MQTT
-      enable: true
+      enable: false
       broker: tcp://127.0.0.1:1883
       client_id: industrial_gateway_001
       topic: things/{client_id}/up
@@ -90,6 +90,10 @@ mqtt:
             enable: true
             strategy: periodic
             interval: 30s
+        slave-5:
+            enable: false
+            strategy: periodic
+            interval: 10s
 http: []
 opcua:
     - id: opcua-1

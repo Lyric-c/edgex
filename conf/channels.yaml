@@ -1122,3 +1122,561 @@
           group: ""
           report_mode: ""
           threshold: null
+- id: jxy3kvpohmetzct0
+  name: BACnet-1
+  protocol: bacnet-ip
+  enable: true
+  config:
+    baudRate: 9600
+    byte_order_4: ABCD
+    connectionType: serial
+    dataBits: 8
+    enableSmartProbe: false
+    instruction_interval: 10
+    ip: 192.168.3.112
+    key: ""
+    max_retries: 3
+    parity: E
+    probeEnableMTU: true
+    probeMaxConsecutive: 20
+    probeMaxDepth: 6
+    probeTimeout: 3000
+    retry_interval: 100
+    start_address: 1
+    stopBits: 1
+  devices:
+    - id: bacnet-2228318
+      name: Device 2228318
+      enable: true
+      interval: 10s
+      config:
+        device_id: 2228318
+        ip: 192.168.3.112
+        network_number: 0
+        port: 63503
+      points:
+        - id: Temperature.Indoor
+          name: AnalogInput 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Water
+          name: AnalogInput 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Outdoor
+          name: AnalogInput 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: SetPoint.Value
+          name: AnalogValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.1
+          name: AnalogValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.2
+          name: AnalogValue 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.3
+          name: AnalogValue 3
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:3
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Heater
+          name: BinaryValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:0
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Chiller
+          name: BinaryValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:1
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+    - id: bacnet-2228316
+      name: Device 2228316
+      enable: true
+      interval: 10s
+      config:
+        device_id: 2228316
+        ip: 192.168.3.112
+        network_number: 0
+        port: 63501
+      points:
+        - id: Temperature.Indoor
+          name: AnalogInput 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Water
+          name: AnalogInput 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Outdoor
+          name: AnalogInput 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: SetPoint.Value
+          name: AnalogValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.1
+          name: AnalogValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.2
+          name: AnalogValue 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.3
+          name: AnalogValue 3
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:3
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Heater
+          name: BinaryValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:0
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Chiller
+          name: BinaryValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:1
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+    - id: bacnet-2228317
+      name: Device 2228317
+      enable: true
+      interval: 10s
+      config:
+        device_id: 2228317
+        ip: 192.168.3.112
+        network_number: 0
+        port: 63502
+      points:
+        - id: Temperature.Indoor
+          name: AnalogInput 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Water
+          name: AnalogInput 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Temperature.Outdoor
+          name: AnalogInput 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogInput:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: SetPoint.Value
+          name: AnalogValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:0
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.1
+          name: AnalogValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:1
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.2
+          name: AnalogValue 2
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:2
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: Setpoint.3
+          name: AnalogValue 3
+          register_type: Holding Registers
+          function_code: 0
+          address: AnalogValue:3
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Heater
+          name: BinaryValue 0
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:0
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: State.Chiller
+          name: BinaryValue 1
+          register_type: Holding Registers
+          function_code: 0
+          address: BinaryValue:1
+          datatype: bool
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: RW
+          group: ""
+          report_mode: ""
+          threshold: null
+- id: 3ny3qwc2qidzqrbn
+  name: OPCUA-1
+  protocol: opc-ua
+  enable: true
+  config:
+    baudRate: 9600
+    byte_order_4: ABCD
+    connectionType: serial
+    dataBits: 8
+    enableSmartProbe: false
+    instruction_interval: 10
+    max_retries: 3
+    parity: E
+    probeEnableMTU: true
+    probeMaxConsecutive: 20
+    probeMaxDepth: 6
+    probeTimeout: 3000
+    retry_interval: 100
+    start_address: 1
+    stopBits: 1
+    url: opc.tcp://LAPTOP-5E3D21EG:53530/OPCUA/SimulationServer
+  devices:
+    - id: "10001"
+      name: OPC-10001
+      enable: true
+      interval: 10s
+      config:
+        auth_method: Anonymous
+        endpoint: opc.tcp://LAPTOP-5E3D21EG:53530/OPCUA/SimulationServer
+        security_mode: None
+        security_policy: None
+      storage:
+        enable: false
+        strategy: interval
+        interval: 1
+        max_records: 1000
+      points:
+        - id: ns=3;i=1011
+          name: ns=3;i=1011
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1011
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1012
+          name: ns=3;i=1012
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1012
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1001
+          name: ns=3;i=1001
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1001
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1002
+          name: ns=3;i=1002
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1002
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1003
+          name: ns=3;i=1003
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1003
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1004
+          name: ns=3;i=1004
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1004
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1005
+          name: ns=3;i=1005
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1005
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1006
+          name: ns=3;i=1006
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1006
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
+        - id: ns=3;i=1007
+          name: ns=3;i=1007
+          register_type: Holding Registers
+          function_code: 0
+          address: ns=3;i=1007
+          datatype: float32
+          scale: 1
+          offset: 0
+          unit: ""
+          readwrite: R
+          group: ""
+          report_mode: ""
+          threshold: null
